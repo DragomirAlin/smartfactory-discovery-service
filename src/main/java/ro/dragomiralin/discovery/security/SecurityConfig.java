@@ -1,66 +1,38 @@
 package ro.dragomiralin.discovery.security;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+
 
 @Configuration
-@EnableWebSecurity
-@Order(1)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    @Autowired
-    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-        auth.inMemoryAuthentication().withUser("discUser").password(encoder().encode("discPassword")).roles("SYSTEM");
-    }
-
     @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.ALWAYS)
-                .and()
-                .requestMatchers()
-                .antMatchers("/eureka/**")
+    protected void configure(HttpSecurity http) throws Exception {// @formatter:off
+        http.cors()
                 .and()
                 .authorizeRequests()
-                .antMatchers("/eureka/**").hasRole("SYSTEM").anyRequest()
-                .denyAll().and()
-                .httpBasic()
+                .antMatchers(HttpMethod.GET, "/me", "/api/foos/**")
+                .hasAuthority("SCOPE_read")
+                .antMatchers(HttpMethod.POST, "/api/foos")
+                .hasAuthority("SCOPE_write")
+                .anyRequest()
+                .authenticated()
                 .and()
-                .csrf()
-                .disable();
-    }
-
-    @Configuration
-    // no order tag means this is the last security filter to be evaluated
-    public static class AdminSecurityConfig extends WebSecurityConfigurerAdapter {
-
-        @Autowired
-        public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-            auth.inMemoryAuthentication();
-        }
-
-        @Override
-        protected void configure(HttpSecurity http) throws Exception {
-            http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.NEVER)
-                    .and().httpBasic().disable()
-                    .authorizeRequests()
-                    .antMatchers(HttpMethod.GET, "/")
-                    .hasRole("ADMIN").antMatchers("/info", "/health").authenticated().anyRequest().denyAll()
-                    .and().csrf().disable();
-        }
-    }
+                .oauth2ResourceServer()
+                .jwt();
+    }// @formatter:on
 
     @Bean
-    public PasswordEncoder encoder() {
-        return new BCryptPasswordEncoder();
+    JwtDecoder jwtDecoder(OAuth2ResourceServerProperties properties) {
+        NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withJwkSetUri(properties.getJwt().getJwkSetUri()).build();
+        jwtDecoder.setClaimSetConverter(new OrganizationSubClaimAdapter());
+        return jwtDecoder;
     }
 }

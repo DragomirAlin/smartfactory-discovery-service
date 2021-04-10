@@ -1,9 +1,12 @@
 spring:
   application:
     name: discovery-service
-  redis:
-    host: localhost
-    port: 6379
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuerUri: http://localhost:8083/auth/realms/baeldung
+          jwkSetUri: http://localhost:8083/auth/realms/baeldung/protocol/openid-connect/certs
 
 server:
   port: 8761
