@@ -5,18 +5,18 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuerUri: http://keycloak:8083/auth/realms/baeldung
-          jwkSetUri: http://keycloak:8083/auth/realms/baeldung/protocol/openid-connect/certs
+          issuerUri: http://192.168.1.5:8083/auth/realms/baeldung
+          jwkSetUri: http://192.168.1.5:8083/auth/realms/baeldung/protocol/openid-connect/certs
 server:
   port: 8761
 eureka:
   instance:
-    hostname: discovery
+    hostname: 192.168.1.5
   client:
     register-with-eureka: false
     fetch-registry: false
     service-url:
-      defaultZone: http://discUser:discPassword@discovery:8761/eureka/
+      defaultZone: http://discUser:discPassword@192.168.1.5:8761/eureka/
   server:
     enable-self-preservation: false
 
