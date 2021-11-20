@@ -15,10 +15,8 @@ jobs:
         with:
           java-version: '15'
           distribution: 'adopt'
-      - name: Run Tests
-        run: mvn clean test
-      - name: Build with Maven
-        run: mvn -B package --file pom.xml
+      - name: Maven Package
+        run: mvn -B clean package --file pom.xml
       - name: Cache SonarCloud packages
         uses: actions/cache@v1
         with:
